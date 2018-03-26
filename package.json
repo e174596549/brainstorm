@@ -1,0 +1,37 @@
+{
+  "name": "bran-storm",
+  "version": "0.0.1",
+  "private": true,
+  "scripts": {
+    "test": "mocha --recursive src/test/mocha --timeout 999999",
+    "upcode": "git pull origin master && git push origin master",
+    "get_production_code": "git checkout production && git pull origin production",
+    "merge2production": "npm run upcode && npm run get_production_code && git merge master && git push origin production && git checkout master",
+    "start": "node ./src/bin/www"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/e174596549/brainstorm.git"
+  },
+  "author": "liuyuan",
+  "dependencies": {
+    "async": "^2.1.4",
+    "body-parser": "^1.13.2",
+    "connect-multiparty": "^2.0.0",
+    "ejs": "^2.3.3",
+    "express": "^4.13.1",
+    "ioredis": "^3.1.1",
+    "later": "^1.2.0",
+    "log4js": "^0.6.38",
+    "mongoose": "^4.13.12",
+    "neo-async": "^2.5.0",
+    "node-slogger": "^0.0.5",
+    "queue-schedule": "0.1.0",
+    "validator-param": "^0.2.0"
+  },
+  "devDependencies": {
+    "chai": "^3.5.0",
+    "mocha": "^3.2.0",
+    "supertest": "^2.0.0"
+  }
+}

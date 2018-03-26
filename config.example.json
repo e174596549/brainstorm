@@ -1,0 +1,13 @@
+{
+    "port":8111,
+    "errorLogFile":"/Users/leo/tmp/error_log.log",
+    "apiServerHost": "http://localhost:8888",
+    "mongoConfig" : {
+        "option" : {"user":"","pass":"111111"},
+        "url" : "mongodb://127.0.0.1:27017/zyclient"
+    },
+    "redisConfig" : {
+        "host" : "127.0.0.1",
+        "port" : 6379
+    }
+}
