@@ -11,11 +11,8 @@ exports.ERROR_CODE = {
     CALL_NOTIFY_RETURN_ERROR : {code:BASE_CODE_FATAL+5,msg:'请求通知接口返回错误'},
     CALL_PROXY_URL_FAIL : {code:BASE_CODE_FATAL+6,msg:'请求代理接口失败'},
 
-    SYNCHRONIZE_API_RES_ERR : {code:BASE_CODE_LOGICAL,msg:'请求同步直播人数信息接口返回错误：'},
+    SAVE_QUESTION_DATA_FAIL : {code:BASE_CODE_LOGICAL,msg:'保存问题信息出错'},
     SYNCHRONIZE_API_RESPONSE_NULL : {code:BASE_CODE_LOGICAL+1,msg:'请求同步直播人数信息接口无响应'},
-    UPDATE_LIVE_INFO_FAIL : {code:BASE_CODE_LOGICAL+2,msg:'请求同步直播人数信息接口出错'},
-    CHECK_UPDATED_LIVE_DATA_FAIL : {code:BASE_CODE_LOGICAL+3,msg:'检查已更新直播ID信息时失败'},
-    SAVE_UPDATED_LIVE_ID_FAIL : {code:BASE_CODE_LOGICAL+4,msg:'存储已同步直播ID时失败'},
 
 
     PARSE_RESULT_FAIL : {code:BASE_CODE_PARAM,msg:'解析请求参数失败'},

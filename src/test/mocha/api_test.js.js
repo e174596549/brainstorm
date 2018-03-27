@@ -2,17 +2,31 @@ const request = require('supertest');
 const {expect} = require('chai');
 const app = require('../../app');
 const {
-    app: {
-        backend_secret ,
-        app_id
-    }
 } = require('../../config');
-const {doSign} = require('../../helpers/auth_helper');
 //const {ERROR_CODE} = require('../../lib/code');
-let new_strategy_id = `strategy:${new Date().getTime()}`;
-let old_strategy_id = '';
 
-describe('api信息', function() {
+describe('question', function() {
+    it('should add a question success', function(done) {
+        const data = {
+            questionName: '人口之最',
+            describe: '世界上人口最多的国家是?',
+            answers: '中国,美国,德国,日本',
+            rightAnswer: 0
+        };
+        request(app)
+            .post('/i/question/add')
+            .send(data)
+            .expect(200)
+            .end(function(err, res) {
+                if (err) {
+                    return done(err);
+                }
+                console.log(res.body);
+                expect(res.body).to.have.property('code').and.equal(0);
+
+                done();
+            });
+    });
     // it('获取当前已启动策略', function(done) {
     //     const data = {
     //         app_id: app_id,
