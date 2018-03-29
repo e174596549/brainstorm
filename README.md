@@ -18,10 +18,13 @@ POST
 
 **请求参数**
 
+- uuid  {String} {必填} 出题人唯一 Id
 - questionName {String} {必填} 题目名称 //'人口之最'
 - describe {String} {必填} 题目描述 // '世界上人口最多的国家是'
 - answers {String} {必填} 用 `,` 拼接各选项描述 // '中国,美国,德国,日本'
 - rightAnswer {Number} {必填} 0 1 2 3
+- level {Number} {必填} 1 2 3 ...
+- type {Number} {必填} 1 历史 2 地理 3 社科 
 
 **请求响应**
 
@@ -31,6 +34,7 @@ POST
         msg     :   {String}, // code的描述信息
         data: {
             questionId :  {String}, // 题目唯一 ID
+            powerCount:{Number}, // 可答题次数
         }
     }
 ```
@@ -48,6 +52,8 @@ GET
 **请求参数**
 
 - questionId {String} {可选} 不选随机出题
+- level {Number} {可选} 1 2 3 ...
+- type {Number} {可选} 1 历史 2 地理 3 社科 
 
 **请求响应**
 
@@ -59,7 +65,7 @@ GET
             questionId :  {String}, // 题目唯一 ID
             questionName : {String} // 题目名称
             describe : {String} // 题目描述
-            answers : [{Number}]
+            answers : [{String}]
         }
     }
 ```
@@ -88,12 +94,46 @@ POST
         msg     :   {String}, // code的描述信息
         data: {
             isRight :  {Boolean},
-            rightAnswer: {String}
+            rightAnswer: {String},
+            powerCount:{Number}, // 可答题次数
         }
     }
 ```
 
 ### 1.2 用户相关
+
+#### 1.2.0 更新用户信息
+
+**path:**
+
+/i/user/update-info
+
+**method:**
+
+POST
+
+**请求参数**
+
+- uuid {String} {必填} 用户唯一 id
+- avatarUrl {String} {必填} 用户头像地址
+- nickName {String}  {必填} 用户昵称
+
+**请求响应**
+
+```javascript
+    {
+        code    :   {Number},//     0=成功
+        msg     :   {String}, // code的描述信息
+        data    : {
+            score:{Number},
+            rank:{Number},
+            submitTimes:{Number}, // 答题次数
+            rightTimes:{Number}, // 正确次数
+            wrongTimes:{Number}, // 正确次数
+            powerCount:{Number}, // 可答题次数
+        }
+    }
+```
 
 #### 1.2.1 获取排行榜
 
@@ -125,7 +165,8 @@ GET
                 page_total: {Number} 总页码数
                 list: [{
                     score:{Number},
-                    user_name:{String},
+                    avatarUrl {String},
+                    nickName {String},
                     uuid:{String}，
                     rank:{Number}
                 }]
