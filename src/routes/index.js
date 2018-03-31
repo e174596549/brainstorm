@@ -11,6 +11,6 @@ router.get('/ping/health',function(req, res) {
 });
 
 router.post('/i/question/add', question.add);
-// router.get('/i/api/device/query', device.query);
+router.get('/i/question/get', question.get);
 
 module.exports = router;

@@ -52,8 +52,8 @@ GET
 **请求参数**
 
 - questionId {String} {可选} 不选随机出题
-- level {Number} {可选} 1 2 3 ...
-- type {Number} {可选} 1 历史 2 地理 3 社科 
+- level {Number} {必须} 1 2 3 ...
+- type {Number} {必须} 1 历史 2 地理 3 社科 
 
 **请求响应**
 

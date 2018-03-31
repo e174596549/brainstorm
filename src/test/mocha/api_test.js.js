@@ -6,12 +6,15 @@ const {
 //const {ERROR_CODE} = require('../../lib/code');
 
 describe('question', function() {
-    it('should add a question success', function(done) {
+    it.only('should add a question success', function(done) {
         const data = {
-            questionName: '人口之最',
-            describe: '世界上人口最多的国家是?',
+            uuid:'user-01',
+            questionName: '人口之最' + Math.random(),
+            describe: '世界上人口最多的国家是?'+ Math.random(),
             answers: '中国,美国,德国,日本',
-            rightAnswer: 0
+            rightAnswer: 0,
+            level: 1,
+            type: 2
         };
         request(app)
             .post('/i/question/add')
@@ -27,29 +30,25 @@ describe('question', function() {
                 done();
             });
     });
-    // it('获取当前已启动策略', function(done) {
-    //     const data = {
-    //         app_id: app_id,
-    //         timestamp: new Date().getTime(),
-    //         client_type : 1
-    //     };
-    //     data.sign = doSign(data, backend_secret);
-    //     // request('http://localhost:8101')
-    //     request(app)
-    //         .get('/i/api/version/started-strategy')
-    //         .query(data)
-    //         .expect(200)
-    //         .end(function(err, res) {
-    //             if (err) {
-    //                 return done(err);
-    //             }
-    //             console.log(res.body);
-    //             if (res.body.data.length > 0) {
-    //                 old_strategy_id = res.body.data[0].strategy_id;
-    //             }
-    //             expect(res.body).to.have.property('code').and.equal(0);
-    //
-    //             done();
-    //         });
-    // });
+    it.only('获取题目', function(done) {
+        const data = {
+            questionName:'5abf81975946bdba1ff435f6',
+            level: 1,
+            type: 2
+        };
+        // request('http://localhost:8101')
+        request(app)
+            .get('/i/question/get')
+            .query(data)
+            .expect(200)
+            .end(function(err, res) {
+                if (err) {
+                    return done(err);
+                }
+                console.log(res.body);
+                expect(res.body).to.have.property('code').and.equal(0);
+
+                done();
+            });
+    });
 });

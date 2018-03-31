@@ -1,6 +1,7 @@
 const {Schema} = require('mongoose');
 
 const questionSchema =  new Schema({
+    uuid: {type:String},
     questionName: {type:String},
     describe: {type:String},
     answers: [{type:String}],
@@ -13,6 +14,10 @@ const questionSchema =  new Schema({
     }
 });
 
-
 questionSchema.index({'questionName': 1});
+questionSchema.index({'uuid': 1});
+questionSchema.index({'level': 1});
+questionSchema.index({'type': 1});
+
+
 module.exports = questionSchema;
