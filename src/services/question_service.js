@@ -51,9 +51,8 @@ exports.add = function(data, callback) {
                 );
             }
             const question_id = results.save_data;
-            const key = REDIS_KEY_QUESTION_INFO_HASH + type + ':' + level;
             data.question_id = question_id;
-            redisClient.hset(key, question_id, JSON.stringify(data), function(err) {
+            redisClient.hset(REDIS_KEY_QUESTION_INFO_HASH, question_id, JSON.stringify(data), function(err) {
                 if(err) {
                     slogger.error(`添加题目 ID 到题目详情缓存失败`, err);
                     return genErrorCallback(
@@ -80,7 +79,6 @@ exports.add = function(data, callback) {
 };
 exports.get = function(data, callback) {
     const {level, type, questionId} = data;
-    const infoKey = REDIS_KEY_QUESTION_INFO_HASH + type + ':' + level;
     async.auto({
         getQuestionId: function(next) {
             if (!questionId) {
@@ -112,7 +110,7 @@ exports.get = function(data, callback) {
                     next
                 );
             }
-            redisClient.hget(infoKey, results.getQuestionId, function(err, item) {
+            redisClient.hget(REDIS_KEY_QUESTION_INFO_HASH, results.getQuestionId, function(err, item) {
                 if(err) {
                     slogger.error(`通过问题 ID 获取题目详情失败`, err);
                     return genErrorCallback(

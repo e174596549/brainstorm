@@ -84,7 +84,7 @@ POST
 
 - uuid {String} {必填} 用户唯一 id
 - questionId {String} {必填} 题目唯一 ID
-- answers {Number} {必填} 0 1 2 3
+- answer {Number} {必填} 0 1 2 3
 
 **请求响应**
 

@@ -4,6 +4,7 @@ const app = require('../../app');
 const {
 } = require('../../config');
 //const {ERROR_CODE} = require('../../lib/code');
+let questionId = '';
 
 describe('question', function() {
     it.only('should add a question success', function(done) {
@@ -25,6 +26,7 @@ describe('question', function() {
                     return done(err);
                 }
                 console.log(res.body);
+                questionId = res.body.data.questionId;
                 expect(res.body).to.have.property('code').and.equal(0);
 
                 done();
@@ -32,7 +34,7 @@ describe('question', function() {
     });
     it.only('获取题目', function(done) {
         const data = {
-            questionName:'5abf81975946bdba1ff435f6',
+            questionId,
             level: 1,
             type: 2
         };
@@ -40,6 +42,27 @@ describe('question', function() {
         request(app)
             .get('/i/question/get')
             .query(data)
+            .expect(200)
+            .end(function(err, res) {
+                if (err) {
+                    return done(err);
+                }
+                console.log(res.body);
+                expect(res.body).to.have.property('code').and.equal(0);
+
+                done();
+            });
+    });
+
+    it('should submit a question success', function(done) {
+        const data = {
+            uuid:'user-01',
+            questionId,
+            answer: 0
+        };
+        request(app)
+            .post('/i/question/submit')
+            .send(data)
             .expect(200)
             .end(function(err, res) {
                 if (err) {

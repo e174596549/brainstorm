@@ -18,3 +18,13 @@ exports.get = function(req, res) {
     const _query = req.query;
     callService(req, res, questionService.get, _query);
 };
+exports.submit = function(req, res) {
+    const _body = req.body;
+    if (!_body.uuid || !_body.questionId) {
+        return genErrorRes(
+            ERROR_CODE.PARAMS_NOT_EXIST,
+            res
+        );
+    }
+    callService(req, res, questionService.submit, _body);
+};

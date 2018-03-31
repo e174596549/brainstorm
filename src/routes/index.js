@@ -12,5 +12,6 @@ router.get('/ping/health',function(req, res) {
 
 router.post('/i/question/add', question.add);
 router.get('/i/question/get', question.get);
+router.post('/i/question/submit', question.submit);
 
 module.exports = router;
