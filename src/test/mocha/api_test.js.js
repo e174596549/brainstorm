@@ -54,7 +54,7 @@ describe('question', function() {
             });
     });
 
-    it('should submit a question success', function(done) {
+    it.only('should submit a question success', function(done) {
         const data = {
             uuid:'user-01',
             questionId,

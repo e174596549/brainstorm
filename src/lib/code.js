@@ -21,6 +21,8 @@ exports.ERROR_CODE = {
     PARSE_QUESTION_INFO_FAIL: {code: BASE_CODE_LOGICAL + 7, msg: '解析题目信息失败'},
     GET_QUESTION_ID_FROM_CACHE_FAIL: {code: BASE_CODE_LOGICAL + 8, msg: '从缓存中获取 questionID 失败'},
     NO_QUESTION_ID_CAN_USE: {code: BASE_CODE_LOGICAL + 9, msg: '无可用题目'},
+    QUESTION_INFO_NOT_EXIST : {code: BASE_CODE_LOGICAL + 10, msg: '题目详情不存在'},
+    INC_USER_RIGHT_TIMES_FAIL : {code: BASE_CODE_LOGICAL + 11, msg: '增加用户答题情况失败'},
 
     PARSE_RESULT_FAIL: {code: BASE_CODE_PARAM, msg: '解析请求参数失败'},
     PARAMS_NOT_EXIST: {code: BASE_CODE_PARAM + 1, msg: '请求参数错误'},

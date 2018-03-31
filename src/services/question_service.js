@@ -1,4 +1,4 @@
-const async = require('async');
+const async = require('neo-async');
 const slogger = require('node-slogger');
 const {
     redisClient
@@ -7,6 +7,9 @@ const {QuestionModel} = require('./index');
 const {ERROR_CODE, genErrorCallback} = require('../lib/code');
 const REDIS_KEY_QUESTION_ID_SET = 'bran_strom:question_id_set:';
 const REDIS_KEY_QUESTION_INFO_HASH = 'bran_strom:question_info_hash:';
+const REDIS_KEY_USER_INFO_HASH = 'bran_strom:user_info_hash:';
+const USER_RIGHT_TIMES = 'right_times';
+const USER_WRONG_TIMES = 'wrong_times';
 
 exports.add = function(data, callback) {
     const {type, level} = data;
@@ -156,3 +159,69 @@ exports.get = function(data, callback) {
     });
 };
 
+exports.submit = function(data, callback) {
+    const {uuid, questionId, answer} = data;
+    let isRight = false;
+    async.auto({
+        getQuestionInfo: function(next) {
+            redisClient.hget(REDIS_KEY_QUESTION_INFO_HASH, questionId, function(err, item) {
+                if(err) {
+                    slogger.error(`通过问题 ID 获取题目详情失败`, err);
+                    return genErrorCallback(
+                        ERROR_CODE.GET_QUESTION_BY_ID_FAIL,
+                        next
+                    );
+                }
+                if(!item) {
+                    slogger.error(`缓存中未查到改题`, questionId);
+                    return genErrorCallback(
+                        ERROR_CODE.QUESTION_NOT_EXIST_IN_CACHE,
+                        next
+                    );
+                }
+                let questionInfo = {};
+                try {
+                    questionInfo = JSON.parse(item);
+                } catch(e) {
+                    if(e) {
+                        slogger.error(`解析题目信息失败`, questionInfo);
+                        return genErrorCallback(
+                            ERROR_CODE.PARSE_QUESTION_INFO_FAIL,
+                            next
+                        );
+                    }
+                }
+                next(false, questionInfo);
+            })
+        },
+        isRight: ['getQuestionInfo', function(results, next) {
+            const {rightAnswer} = results.getQuestionInfo;
+            // if (){
+            //
+            // }
+            isRight = Number(rightAnswer) === Number(answer);
+            const key = REDIS_KEY_USER_INFO_HASH + uuid;
+            const incKey = isRight ? USER_RIGHT_TIMES: USER_WRONG_TIMES;
+            redisClient.hincrby(key, incKey, 1, function(err) {
+                if(err) {
+                    slogger.error(`增加答题情况出错`, err);
+                    return genErrorCallback(
+                        ERROR_CODE.INC_USER_RIGHT_TIMES_FAIL,
+                        next
+                    );
+                }
+                next(false);
+            })
+        }]
+    }, function(err, results) {
+        if(err) {
+            return genErrorCallback(
+                err,
+                callback
+            );
+        }
+        callback(false, {
+            isRight
+        });
+    });
+};
