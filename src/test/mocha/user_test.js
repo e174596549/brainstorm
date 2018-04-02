@@ -6,8 +6,8 @@ const {
 //const {ERROR_CODE} = require('../../lib/code');
 let questionId = '';
 
-describe('question', function() {
-    it.only('should update a user info', function(done) {
+describe('user', function() {
+    it('should update a user info', function(done) {
         const data = {
             uuid:'user-01',
             avatarUrl: 'http://user-01avatarUrl',

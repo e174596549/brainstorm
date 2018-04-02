@@ -165,7 +165,6 @@ exports.get = function(data, callback) {
 
 exports.submit = function(data, callback) {
     const {uuid, questionId, answer} = data;
-    let isRight = false;
     async.auto({
         incSubmitTimes: function(next) {
             const key = REDIS_KEY_USER_INFO_HASH + uuid;
@@ -216,7 +215,7 @@ exports.submit = function(data, callback) {
             // if (){
             //
             // }
-            isRight = Number(rightAnswer) === Number(answer);
+            const isRight = Number(rightAnswer) === Number(answer);
             const key = REDIS_KEY_USER_INFO_HASH + uuid;
             const incKey = isRight ? USER_RIGHT_TIMES: USER_WRONG_TIMES;
             redisClient.hincrby(key, incKey, 1, function(err) {
@@ -227,11 +226,11 @@ exports.submit = function(data, callback) {
                         next
                     );
                 }
-                next(false);
+                next(false, isRight);
             })
         }],
         incRank: ['isRight', function(results, next) {
-            if (isRight) {
+            if (results.isRight) {
                 const key = REDIS_KEY_USER_RANK_ZSET + today;
                 redisClient.zincrby(key, 1, uuid, function(err) {
                     if(err) {
@@ -243,6 +242,8 @@ exports.submit = function(data, callback) {
                     }
                     next(false);
                 })
+            } else {
+                next(false);
             }
         }]
     }, function(err, results) {
@@ -253,7 +254,7 @@ exports.submit = function(data, callback) {
             );
         }
         callback(false, {
-            isRight
+            isRight: results.isRight
         });
     });
 };
