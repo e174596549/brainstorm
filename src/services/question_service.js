@@ -141,7 +141,7 @@ exports.get = function(data, callback) {
                     }
                 }
                 next(false, {
-                    questionId: questionInfo.questionId,
+                    questionId: questionInfo.question_id,
                     questionName: questionInfo.questionName,
                     describe: questionInfo.describe,
                     answers: questionInfo.answers
