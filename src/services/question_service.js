@@ -8,8 +8,12 @@ const {ERROR_CODE, genErrorCallback} = require('../lib/code');
 const REDIS_KEY_QUESTION_ID_SET = 'bran_strom:question_id_set:';
 const REDIS_KEY_QUESTION_INFO_HASH = 'bran_strom:question_info_hash:';
 const REDIS_KEY_USER_INFO_HASH = 'bran_strom:user_info_hash:';
+const REDIS_KEY_USER_TOKEN_STRING = 'bran_strom:user_token_string:';
+const REDIS_KEY_USER_RANK_ZSET = 'bran_strom:user_rank_zset:';
 const USER_RIGHT_TIMES = 'right_times';
 const USER_WRONG_TIMES = 'wrong_times';
+const date = new Date();
+const today = date.getFullYear() + '-' + date.getMonth() + '-' + date.getDay();
 
 exports.add = function(data, callback) {
     const {type, level} = data;
@@ -163,6 +167,19 @@ exports.submit = function(data, callback) {
     const {uuid, questionId, answer} = data;
     let isRight = false;
     async.auto({
+        incSubmitTimes: function(next) {
+            const key = REDIS_KEY_USER_INFO_HASH + uuid;
+            redisClient.hincrby(key, 'submitTimes', 1, function(err) {
+                if(err) {
+                    slogger.error(`增加用户答题次数失败`, err);
+                    return genErrorCallback(
+                        ERROR_CODE.INC_USER_ANWSER_TIMES_FAIL,
+                        next
+                    );
+                }
+                next(false);
+            })
+        },
         getQuestionInfo: function(next) {
             redisClient.hget(REDIS_KEY_QUESTION_INFO_HASH, questionId, function(err, item) {
                 if(err) {
@@ -212,6 +229,21 @@ exports.submit = function(data, callback) {
                 }
                 next(false);
             })
+        }],
+        incRank: ['isRight', function(results, next) {
+            if (isRight) {
+                const key = REDIS_KEY_USER_RANK_ZSET + today;
+                redisClient.zincrby(key, 1, uuid, function(err) {
+                    if(err) {
+                        slogger.error(`增加用户在排行榜中的积分失败`, err);
+                        return genErrorCallback(
+                            ERROR_CODE.INC_USER_RANK_SCORE_FAIL,
+                            next
+                        );
+                    }
+                    next(false);
+                })
+            }
         }]
     }, function(err, results) {
         if(err) {
@@ -223,5 +255,36 @@ exports.submit = function(data, callback) {
         callback(false, {
             isRight
         });
+    });
+};
+
+exports.updateInfo = function(data, callback) {
+    const {uuid, avatarUrl, nickName} = data;
+    let isRight = false;
+    async.auto({
+        doUpdate: function(next) {
+            const key = REDIS_KEY_USER_TOKEN_STRING + uuid;
+            redisClient.set(key, JSON.stringify({
+                nickName,
+                avatarUrl
+            }), function(err) {
+                if(err) {
+                    slogger.error(`更新用户 token 信息失败`, err);
+                    return genErrorCallback(
+                        ERROR_CODE.UPDATE_USER_TOKEN_INFO_FAIL,
+                        next
+                    );
+                }
+                next(false);
+            })
+        }
+    }, function(err) {
+        if(err) {
+            return genErrorCallback(
+                err,
+                callback
+            );
+        }
+        callback(false);
     });
 };
