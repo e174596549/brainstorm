@@ -158,19 +158,19 @@ GET
         code    :   {Number},//     0=成功
         msg     :   {String}, // code的描述信息
         data:{   
-            page:{
                 page_num: {Number} 当前页码数
                 page_size: {Number} 每页显示数量
                 record_total: {Number} 查询结果总数
                 page_total: {Number} 总页码数
+                count: {Number} 用户积分
+                rank: {Number} 用户排行
                 list: [{
                     score:{Number},
                     avatarUrl {String},
                     nickName {String},
-                    uuid:{String}，
+                    uuid:{String},
                     rank:{Number}
                 }]
-            }
         }
     }
 ```

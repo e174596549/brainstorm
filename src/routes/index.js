@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const question = require('../controllers/question_controller');
+const user = require('../controllers/user_controller');
 
 /*  */
 router.get('/', function(req, res) {
@@ -13,6 +14,7 @@ router.get('/ping/health',function(req, res) {
 router.post('/i/question/add', question.add);
 router.get('/i/question/get', question.get);
 router.post('/i/question/submit', question.submit);
-router.post('/i/user/update-info', question.updateInfo);
+router.post('/i/user/update-info', user.updateInfo);
+router.get('/i/rank/get', user.get);
 
 module.exports = router;
