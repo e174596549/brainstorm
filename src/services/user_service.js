@@ -179,7 +179,7 @@ exports.get = function(data, callback) {
                         next
                     );
                 }
-                next(false, item + 1)
+                next(false, item === null ? null : item + 1)
             })
         },
         getUserCountInfo: function(next) {
@@ -205,7 +205,7 @@ exports.get = function(data, callback) {
         const data = {};
         Object.assign(data, results.getAllRank);
         data.score = Number(results.getUserCountInfo);
-        data.rank = Number(results.getUserRankInfo);
+        data.rank = results.getUserRankInfo;
         callback(false, data);
     });
 };
