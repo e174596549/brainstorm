@@ -13,7 +13,7 @@ const REDIS_KEY_USER_RANK_ZSET = 'bran_strom:user_rank_zset:';
 const USER_RIGHT_TIMES = 'right_times';
 const USER_WRONG_TIMES = 'wrong_times';
 const date = new Date();
-const today = date.getFullYear() + '-' + date.getMonth() + '-' + date.getDay();
+const today = `${date.getFullYear()}-${date.getMonth()+1}-${date.getDate()}`;
 
 exports.add = function(data, callback) {
     const {type, level} = data;
@@ -167,7 +167,7 @@ exports.submit = function(data, callback) {
     const {uuid, questionId, answer} = data;
     async.auto({
         incSubmitTimes: function(next) {
-            const key = REDIS_KEY_USER_INFO_HASH + uuid;
+            const key = REDIS_KEY_USER_INFO_HASH + today + ':' + uuid ;
             redisClient.hincrby(key, 'submitTimes', 1, function(err) {
                 if(err) {
                     slogger.error(`增加用户答题次数失败`, err);
@@ -216,7 +216,7 @@ exports.submit = function(data, callback) {
             //
             // }
             const isRight = Number(rightAnswer) === Number(answer);
-            const key = REDIS_KEY_USER_INFO_HASH + uuid;
+            const key = REDIS_KEY_USER_INFO_HASH + today + ':' + uuid ;
             const incKey = isRight ? USER_RIGHT_TIMES: USER_WRONG_TIMES;
             redisClient.hincrby(key, incKey, 1, function(err) {
                 if(err) {

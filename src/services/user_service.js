@@ -12,8 +12,9 @@ const REDIS_KEY_USER_TOKEN_STRING = 'bran_strom:user_token_string:';
 const REDIS_KEY_USER_RANK_ZSET = 'bran_strom:user_rank_zset:';
 const USER_RIGHT_TIMES = 'right_times';
 const USER_WRONG_TIMES = 'wrong_times';
+const MAX_ANSWER_COUNTS = 100;
 const date = new Date();
-const today = date.getFullYear() + '-' + date.getMonth() + '-' + date.getDay();
+const today = `${date.getFullYear()}-${date.getMonth()+1}-${date.getDate()}`;
 
 
 exports.updateInfo = function(data, callback) {
@@ -153,7 +154,7 @@ const _getAllRankInfo = function(pageNum = 1, pageSize = 10, callback) {
     ], callback);
 };
 
-exports.get = function(data, callback) {
+exports.getRank = function(data, callback) {
     const {uuid, avatarUrl, nickName, page_num, page_size} = data;
     console.log('data: ', data)
     async.auto({
@@ -207,5 +208,66 @@ exports.get = function(data, callback) {
         data.score = Number(results.getUserCountInfo);
         data.rank = results.getUserRankInfo;
         callback(false, data);
+    });
+};
+
+exports.info = function(data, callback) {
+    const {uuid} = data;
+    async.auto({
+        getUserInfo: function(next) {
+            const key = REDIS_KEY_USER_INFO_HASH + today + ':' + uuid ;
+            redisClient.hgetall(key, function(err, item) {
+                if(err) {
+                    slogger.error('获取用操作信息失败', err);
+                    return genErrorCallback(
+                        ERROR_CODE.GET_USER_OPERATION_INFO_FAIL,
+                        next
+                    );
+                }
+                next(false, item);
+            })
+        },
+        getUserRankInfo: function(next) {
+            const key = REDIS_KEY_USER_RANK_ZSET + today;
+            redisClient.zrevrank(key, uuid, function(err, item) {
+                if(err) {
+                    slogger.error('查询用户排名失败', err);
+                    return genErrorCallback(
+                        ERROR_CODE.GET_USER_RANK_INFO_FAIL,
+                        next
+                    );
+                }
+                next(false, item === null ? null : item + 1);
+            })
+        },
+        getUserCountInfo: function(next) {
+            const key = REDIS_KEY_USER_RANK_ZSET + today;
+            redisClient.zscore(key, uuid, function(err, item) {
+                if(err) {
+                    slogger.error('查询用户积分失败', err);
+                    return genErrorCallback(
+                        ERROR_CODE.GET_USER_COUNT_INFO_FAIL,
+                        next
+                    );
+                }
+                next(false, Number(item));
+            })
+        }
+    }, function(err, results) {
+        if(err) {
+            return genErrorCallback(
+                err,
+                callback
+            );
+        }
+        const {getUserCountInfo, getUserRankInfo, getUserInfo} = results;
+        callback(false, {
+            score: getUserCountInfo,
+            rank: getUserRankInfo,
+            submitTimes: Number(getUserInfo.submitTimes),
+            rightTimes: Number(getUserInfo.right_times),
+            wrongTimes: Number(getUserInfo.wrong_times),
+            powerCount: MAX_ANSWER_COUNTS - Number(getUserInfo.submitTimes)
+        });
     });
 };

@@ -30,13 +30,33 @@ describe('user', function() {
     }
     it('获取排行榜', function(done) {
         const data = {
-            uuid:'user-02',
+            uuid:'user-020',
             page_num:1,
             page_size:3
         };
         // request('http://localhost:8101')
         request(app)
             .get('/i/rank/get')
+            .query(data)
+            .expect(200)
+            .end(function(err, res) {
+                if (err) {
+                    return done(err);
+                }
+                console.log(res.body);
+                expect(res.body).to.have.property('code').and.equal(0);
+
+                done();
+            });
+    });
+
+    it('获取用户详情', function(done) {
+        const data = {
+            uuid:'user-02'
+        };
+        // request('http://localhost:8101')
+        request(app)
+            .get('/i/user/info')
             .query(data)
             .expect(200)
             .end(function(err, res) {

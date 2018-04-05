@@ -15,6 +15,7 @@ router.post('/i/question/add', question.add);
 router.get('/i/question/get', question.get);
 router.post('/i/question/submit', question.submit);
 router.post('/i/user/update-info', user.updateInfo);
-router.get('/i/rank/get', user.get);
+router.get('/i/rank/get', user.getRank);
+router.get('/i/user/info', user.info);
 
 module.exports = router;
