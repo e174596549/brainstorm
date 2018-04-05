@@ -35,6 +35,7 @@ exports.ERROR_CODE = {
     GET_USER_RANK_INFO_FAIL: {code: BASE_CODE_LOGICAL + 21, msg: '查询用户排名失败'},
     GET_USER_COUNT_INFO_FAIL: {code: BASE_CODE_LOGICAL + 22, msg: '查询用户积分失败'},
     GET_USER_OPERATION_INFO_FAIL: {code: BASE_CODE_LOGICAL + 23, msg: '获取用操作信息失败'},
+    CALL_INFO_API_FAIL: {code: BASE_CODE_LOGICAL + 24, msg: '调用获取用户信息接口失败'},
 
     PARSE_RESULT_FAIL: {code: BASE_CODE_PARAM, msg: '解析请求参数失败'},
     PARAMS_NOT_EXIST: {code: BASE_CODE_PARAM + 1, msg: '请求参数错误'},

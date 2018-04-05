@@ -36,15 +36,27 @@ exports.updateInfo = function(data, callback) {
                 }
                 next(false);
             })
+        },
+        getInfo: function(next) {
+            info(data, function(err, item) {
+                if(err) {
+                    slogger.error(`调用获取用户信息接口失败`, err);
+                    return genErrorCallback(
+                        ERROR_CODE.CALL_INFO_API_FAIL,
+                        next
+                    );
+                }
+                next(false, item);
+            })
         }
-    }, function(err) {
+    }, function(err, results) {
         if(err) {
             return genErrorCallback(
                 err,
                 callback
             );
         }
-        callback(false);
+        callback(false, results.getInfo);
     });
 };
 
@@ -211,7 +223,7 @@ exports.getRank = function(data, callback) {
     });
 };
 
-exports.info = function(data, callback) {
+const info = exports.info = function(data, callback) {
     const {uuid} = data;
     async.auto({
         getUserInfo: function(next) {
