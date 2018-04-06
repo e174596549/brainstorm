@@ -276,7 +276,7 @@ const info = exports.info = function(data, callback) {
             submitTimes: Number(getUserInfo.submitTimes),
             rightTimes: Number(getUserInfo.right_times),
             wrongTimes: Number(getUserInfo.wrong_times),
-            powerCount: MAX_ANSWER_COUNTS - Number(getUserInfo.submitTimes)
+            powerCount: MAX_ANSWER_COUNTS - Number(getUserInfo.submitTimes) || MAX_ANSWER_COUNTS
         });
     });
 };
