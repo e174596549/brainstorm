@@ -1,7 +1,8 @@
 const async = require('neo-async');
 const slogger = require('node-slogger');
 const {
-    redisClient
+    redisClient,
+    MAX_ANSWER_COUNTS
 } = require('../config');
 const {QuestionModel} = require('./index');
 const {ERROR_CODE, genErrorCallback} = require('../lib/code');
@@ -168,7 +169,7 @@ exports.submit = function(data, callback) {
     async.auto({
         incSubmitTimes: function(next) {
             const key = REDIS_KEY_USER_INFO_HASH + today + ':' + uuid ;
-            redisClient.hincrby(key, 'submitTimes', 1, function(err) {
+            redisClient.hincrby(key, 'submitTimes', 1, function(err, item) {
                 if(err) {
                     slogger.error(`增加用户答题次数失败`, err);
                     return genErrorCallback(
@@ -176,7 +177,7 @@ exports.submit = function(data, callback) {
                         next
                     );
                 }
-                next(false);
+                next(false, item);
             })
         },
         getQuestionInfo: function(next) {
@@ -254,7 +255,9 @@ exports.submit = function(data, callback) {
             );
         }
         callback(false, {
-            isRight: results.isRight
+            isRight: results.isRight,
+            rightAnswer: results.getQuestionInfo.rightAnswer,
+            powerCount: MAX_ANSWER_COUNTS - results.incSubmitTimes
         });
     });
 };

@@ -1,7 +1,8 @@
 const async = require('neo-async');
 const slogger = require('node-slogger');
 const {
-    redisClient
+    redisClient,
+    MAX_ANSWER_COUNTS
 } = require('../config');
 const {QuestionModel} = require('./index');
 const {ERROR_CODE, genErrorCallback} = require('../lib/code');
@@ -12,7 +13,6 @@ const REDIS_KEY_USER_TOKEN_STRING = 'bran_strom:user_token_string:';
 const REDIS_KEY_USER_RANK_ZSET = 'bran_strom:user_rank_zset:';
 const USER_RIGHT_TIMES = 'right_times';
 const USER_WRONG_TIMES = 'wrong_times';
-const MAX_ANSWER_COUNTS = 100;
 const date = new Date();
 const today = `${date.getFullYear()}-${date.getMonth()+1}-${date.getDate()}`;
 
@@ -22,7 +22,6 @@ exports.updateInfo = function(data, callback) {
     async.auto({
         doUpdate: function(next) {
             const key = REDIS_KEY_USER_TOKEN_STRING + uuid;
-            console.log('key: ', key)
             redisClient.set(key, JSON.stringify({
                 nickName,
                 avatarUrl
@@ -62,7 +61,6 @@ exports.updateInfo = function(data, callback) {
 
 const _getAllRankInfo = function(pageNum = 1, pageSize = 10, callback) {
     const listKey = REDIS_KEY_USER_RANK_ZSET + today;
-    console.log('listKey: ', listKey)
     let total_num = 0;
     let total_page = 0;
     async.waterfall([
@@ -167,8 +165,7 @@ const _getAllRankInfo = function(pageNum = 1, pageSize = 10, callback) {
 };
 
 exports.getRank = function(data, callback) {
-    const {uuid, avatarUrl, nickName, page_num, page_size} = data;
-    console.log('data: ', data)
+    const {uuid, page_num, page_size} = data;
     async.auto({
         getAllRank: function(next) {
             _getAllRankInfo(page_num, page_size, function(err, item) {

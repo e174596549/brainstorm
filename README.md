@@ -94,7 +94,7 @@ POST
         msg     :   {String}, // code的描述信息
         data: {
             isRight :  {Boolean},
-            rightAnswer: {String},
+            rightAnswer: {Number},
             powerCount:{Number}, // 可答题次数
         }
     }

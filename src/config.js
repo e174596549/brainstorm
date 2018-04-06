@@ -40,3 +40,5 @@ if (clusterRedis instanceof Array) {
 } else {
     exports.redisClient = new Redis(redisConfig);
 }
+
+exports.MAX_ANSWER_COUNTS = 100;
