@@ -6,28 +6,28 @@ const {} = require('../../config');
 let questionId = '';
 
 describe('user', function() {
-    for(let i = 0; i < 10; i++) {
-        it('should update a user info success', function(done) {
-            const data = {
-                uuid: 'user-0' + i,
-                avatarUrl: 'http://user-01avatarUrl',
-                nickName: '王小' + i
-            };
-            request(app)
-                .post('/i/user/update-info')
-                .send(data)
-                .expect(200)
-                .end(function(err, res) {
-                    if(err) {
-                        return done(err);
-                    }
-                    console.log(res.body);
-                    expect(res.body).to.have.property('code').and.equal(0);
-
-                    done();
-                });
-        });
-    }
+    //for(let i = 0; i < 10; i++) {
+    //     it('should update a user info success', function(done) {
+    //         const data = {
+    //             js_code: '01147by90LipPv1Fj8z90vbUx9047byq',
+    //             // avatarUrl: 'http://user-01avatarUrl',
+    //             // nickName: '王小' + i
+    //         };
+    //         request(app)
+    //             .post('/i/user/update-info')
+    //             .send(data)
+    //             .expect(200)
+    //             .end(function(err, res) {
+    //                 if(err) {
+    //                     return done(err);
+    //                 }
+    //                 console.log(res.body);
+    //                 expect(res.body).to.have.property('code').and.equal(0);
+    //
+    //                 done();
+    //             });
+    //     });
+    //}
     it('获取排行榜', function(done) {
         const data = {
             uuid:'user-020',

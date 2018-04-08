@@ -114,7 +114,7 @@ POST
 
 **请求参数**
 
-- uuid {String} {必填} 用户唯一 id
+- js_code {String} {必填} 用户唯一登录码
 - avatarUrl {String} {必填} 用户头像地址
 - nickName {String}  {必填} 用户昵称
 
@@ -125,6 +125,9 @@ POST
         code    :   {Number},//     0=成功
         msg     :   {String}, // code的描述信息
         data    : {
+            openid:{String},
+            session_key:{String},
+            expires_in:{Number},
             score:{Number},
             rank:{Number},
             submitTimes:{Number}, // 答题次数

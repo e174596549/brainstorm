@@ -4,6 +4,9 @@ const {
     redisClient,
     MAX_ANSWER_COUNTS
 } = require('../config');
+const {
+    doGet
+} = require('../lib/http_util');
 const {QuestionModel} = require('./index');
 const {ERROR_CODE, genErrorCallback} = require('../lib/code');
 const REDIS_KEY_QUESTION_ID_SET = 'bran_strom:question_id_set:';
@@ -15,12 +18,43 @@ const USER_RIGHT_TIMES = 'right_times';
 const USER_WRONG_TIMES = 'wrong_times';
 const date = new Date();
 const today = `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()}`;
+const GET_UUID_URL = 'https://api.weixin.qq.com/sns/jscode2session';
 
 
 exports.updateInfo = function(data, callback) {
-    const {uuid, avatarUrl, nickName} = data;
+    const {js_code, avatarUrl, nickName} = data;
     async.auto({
-        doUpdate: function(next) {
+        getUuid: function(next) {
+            const data = {
+                appid :'wx53625e028829c2c9',
+                secret : '6ceb7fcb6187289ae43192eaf3a3bdd1',
+                js_code,
+                grant_type: 'authorization_code'
+            };
+            doGet(GET_UUID_URL, data, '获取 uuid', function(err, result) {
+                if (err) {
+                    slogger.error('调用微信接口出错', err);
+                    return genErrorCallback(
+                        ERROR_CODE.CALL_WEIXIN_API_FAIL,
+                        next
+                    );
+                }
+                const {errcode} = result;
+                if (errcode) {
+                    slogger.error('调用微信接口返回错误', result);
+                    return genErrorCallback(
+                        ERROR_CODE.WEIXIN_API_RES_ERR,
+                        next
+                    );
+                }
+                next(false, result);
+            });
+            // next(false, { openid: 'o2hDt0LM7PVp2_htwLyE6OF5wsSg',
+            //     session_key: 'wXAEHNCPlKbz+6XAQ49lmQ==',
+            //     expires_in: 7200})
+        },
+        doUpdate: ['getUuid', function(results, next) {
+            const uuid = results.getUuid.openid;
             const key = REDIS_KEY_USER_TOKEN_STRING + uuid;
             redisClient.set(key, JSON.stringify({
                 nickName,
@@ -35,8 +69,9 @@ exports.updateInfo = function(data, callback) {
                 }
                 next(false);
             })
-        },
-        getInfo: function(next) {
+        }],
+        getInfo: ['getUuid', function(results, next) {
+            data.uuid = results.getUuid.openid;
             info(data, function(err, item) {
                 if(err) {
                     slogger.error(`调用获取用户信息接口失败`, err);
@@ -47,7 +82,7 @@ exports.updateInfo = function(data, callback) {
                 }
                 next(false, item);
             })
-        }
+        }]
     }, function(err, results) {
         if(err) {
             return genErrorCallback(
@@ -55,6 +90,11 @@ exports.updateInfo = function(data, callback) {
                 callback
             );
         }
+        Object.assign(results.getInfo, {
+            openid: results.getUuid.openid,
+            session_key: results.getUuid.session_key,
+            expires_in: results.getUuid.expires_in,
+        });
         callback(false, results.getInfo);
     });
 };

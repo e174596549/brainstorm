@@ -5,12 +5,12 @@ const {ERROR_CODE, genErrorRes} = require('../lib/code');
 
 exports.updateInfo = function(req, res) {
     const _body = req.body;
-    // if (!_body.uuid || !_body.questionName || !_body.describe || !_body.answers || !_body.level || !_body.type) {
-    //     return genErrorRes(
-    //         ERROR_CODE.PARAMS_NOT_EXIST,
-    //         res
-    //     );
-    // }
+    if (!_body.js_code) {
+        return genErrorRes(
+            ERROR_CODE.PARAMS_NOT_EXIST,
+            res
+        );
+    }
     callService(req, res, userService.updateInfo, _body);
 };
 
