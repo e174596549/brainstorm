@@ -11,10 +11,12 @@ const REDIS_KEY_QUESTION_INFO_HASH = 'bran_strom:question_info_hash:';
 const REDIS_KEY_USER_INFO_HASH = 'bran_strom:user_info_hash:';
 const REDIS_KEY_USER_TOKEN_STRING = 'bran_strom:user_token_string:';
 const REDIS_KEY_USER_RANK_ZSET = 'bran_strom:user_rank_zset:';
+const REDIS_KEY_UNPUBLISHED_QUESTION_ID_SET = 'bran_strom:unpublished_question_id_set:';
+const REDIS_KEY_EVALUATE_QUESTION_INC = 'bran_strom:evaluate_question_inc:';
 const USER_RIGHT_TIMES = 'right_times';
 const USER_WRONG_TIMES = 'wrong_times';
 const date = new Date();
-const today = `${date.getFullYear()}-${date.getMonth()+1}-${date.getDate()}`;
+const today = `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()}`;
 
 exports.add = function(data, callback) {
     const {type, level} = data;
@@ -39,12 +41,12 @@ exports.add = function(data, callback) {
                 );
             }
             const question_id = results.save_data;
-            const key = REDIS_KEY_QUESTION_ID_SET + type + ':' + level;
+            const key = REDIS_KEY_UNPUBLISHED_QUESTION_ID_SET + type + ':' + level;
             redisClient.sadd(key, question_id, function(err) {
                 if(err) {
-                    slogger.error(`添加题目 ID 到题目列表缓存失败`, err);
+                    slogger.error(`添加题目 ID 到未发布题目列表缓存失败`, err);
                     return genErrorCallback(
-                        ERROR_CODE.CACHE_QUESTION_2_SET_FAIL,
+                        ERROR_CODE.CACHE_QUESTION_2_UNPUBLISHED_SET_FAIL,
                         next
                     );
                 }
@@ -85,11 +87,214 @@ exports.add = function(data, callback) {
         });
     });
 };
+
+exports.unpublished = function(data, callback) {
+    const {type, level} = data;
+    async.auto({
+        getQuestionIds: function(next) {
+            const key = REDIS_KEY_UNPUBLISHED_QUESTION_ID_SET + type + ':' + level;
+            redisClient.srandmember(key, 5, function(err, questionIds) {
+                if(err) {
+                    slogger.error('获取未发布题目列表缓存失败', err);
+                    return genErrorCallback(
+                        ERROR_CODE.GET_UNPUBLISHED_QUESTIONS_FAIL,
+                        next
+                    );
+                }
+                next(false, questionIds);
+            })
+        },
+        getQuestionInfo: ['getQuestionIds', function(results, next) {
+            if(!results || !results.getQuestionIds) {
+                return genErrorCallback(
+                    ERROR_CODE.QUESTION_ID_NOT_EXIST,
+                    next
+                );
+            }
+            const questionIds = results.getQuestionIds;
+            redisClient.hmget(REDIS_KEY_QUESTION_INFO_HASH, questionIds, function(err, questions) {
+                if(err) {
+                    slogger.error(`添加题目 ID 到题目详情缓存失败`, err);
+                    return genErrorCallback(
+                        ERROR_CODE.CACHE_QUESTION_2_HASH_FAIL,
+                        next
+                    );
+                }
+                next(false, questions);
+            })
+        }]
+    }, function(err, results) {
+        console.log('err = ', err);
+        console.log('results = ', results);
+        const data = results.getQuestionInfo.map(question => JSON.parse(question));
+        if(err) {
+            return genErrorCallback(
+                err,
+                callback
+            );
+        }
+        callback(false, {
+            unpublishedQuestions: data
+        });
+    });
+};
+
+exports.evaluate = function(data, callback) {
+    const {questionId, pass, type, level} = data;
+    const key = REDIS_KEY_EVALUATE_QUESTION_INC + questionId;
+    async.auto({
+        updateQuestionScore: function(next) {
+            redisClient.incrby(key, pass ? 1 : -1, function(err, questionScore) {
+                if(err) {
+                    slogger.error('更新题目评分失败', err);
+                    return genErrorCallback(
+                        ERROR_CODE.UPDATE_QUESTION_SCORE_FAIL,
+                        next
+                    );
+                }
+                next(false, questionScore);
+            })
+        },
+        check: ['updateQuestionScore', function(results, next) {
+            const score = results.updateQuestionScore;
+            if(score > 3 || score < -3) {
+                redisClient.del(key, function(err) {
+                    if(err) {
+                        slogger.error('删除题目评分缓存失败', err);
+                        return genErrorCallback(
+                            ERROR_CODE.DEL_CACHE_QUESTION_SCORE_FAIL,
+                            next
+                        );
+                    }
+                    next(false);
+                })
+            } else {
+                next(false);
+            }
+        }],
+        upDate: ['updateQuestionScore', function(results, next) {
+            const score = results.updateQuestionScore;
+            if(score > 3) {
+                const key = REDIS_KEY_QUESTION_ID_SET + type + ':' + level;
+                redisClient.sadd(key, questionId, function(err) {
+                    if(err) {
+                        slogger.error(`添加题目 ID 到题目列表缓存失败`, err);
+                        return genErrorCallback(
+                            ERROR_CODE.CACHE_QUESTION_2_SET_FAIL,
+                            next
+                        );
+                    }
+                    next(false);
+                })
+            } else if(score < -3) {
+                const key = REDIS_KEY_UNPUBLISHED_QUESTION_ID_SET + type + ':' + level;
+                redisClient.srem(key, questionId, function(err) {
+                    if(err) {
+                        slogger.error('从未发布题目列表中删除题目失败', err);
+                        return genErrorCallback(
+                            ERROR_CODE.REMOVE_UNPUBLISHED_QUESTIONS_FAIL,
+                            next
+                        );
+                    }
+                    next(false)
+                });
+                redisClient.hdel(REDIS_KEY_QUESTION_INFO_HASH, questionId, function(err) {
+                    if(err) {
+                        slogger.error('中题目详情缓存中删除题目失败', err);
+                    }
+                })
+            } else {
+                next(false);
+            }
+        }]
+    }, function(err, results) {
+        console.log('err = ', err);
+        console.log('results = ', results);
+        if(err) {
+            return genErrorCallback(
+                err,
+                callback
+            );
+        }
+        callback(false);
+    });
+};
+
+// exports.add = function(data, callback) {
+//     const {type, level} = data;
+//     async.auto({
+//         save_data: function(next) {
+//             new QuestionModel(data).save(function(err, item) {
+//                 if(err) {
+//                     slogger.error(`保存问题信息出错: `, err);
+//                     return genErrorCallback(
+//                         ERROR_CODE.SAVE_QUESTION_DATA_FAIL,
+//                         next
+//                     );
+//                 }
+//                 next(false, item._id);
+//             })
+//         },
+//         cache2QuestionSet: ['save_data', function(results, next) {
+//             if(!results || !results.save_data) {
+//                 return genErrorCallback(
+//                     ERROR_CODE.QUESTION_ID_NOT_EXIST,
+//                     next
+//                 );
+//             }
+//             const question_id = results.save_data;
+//             const key = REDIS_KEY_QUESTION_ID_SET + type + ':' + level;
+//             redisClient.sadd(key, question_id, function(err) {
+//                 if(err) {
+//                     slogger.error(`添加题目 ID 到题目列表缓存失败`, err);
+//                     return genErrorCallback(
+//                         ERROR_CODE.CACHE_QUESTION_2_SET_FAIL,
+//                         next
+//                     );
+//                 }
+//                 next(false);
+//             })
+//         }],
+//         cache2QuestionHash: ['save_data', function(results, next) {
+//             if(!results || !results.save_data) {
+//                 return genErrorCallback(
+//                     ERROR_CODE.QUESTION_ID_NOT_EXIST,
+//                     next
+//                 );
+//             }
+//             const question_id = results.save_data;
+//             data.question_id = question_id;
+//             redisClient.hset(REDIS_KEY_QUESTION_INFO_HASH, question_id, JSON.stringify(data), function(err) {
+//                 if(err) {
+//                     slogger.error(`添加题目 ID 到题目详情缓存失败`, err);
+//                     return genErrorCallback(
+//                         ERROR_CODE.CACHE_QUESTION_2_HASH_FAIL,
+//                         next
+//                     );
+//                 }
+//                 next(false);
+//             })
+//         }]
+//     }, function(err, results) {
+//         console.log('err = ', err);
+//         console.log('results = ', results);
+//         if(err) {
+//             return genErrorCallback(
+//                 err,
+//                 callback
+//             );
+//         }
+//         callback(false, {
+//             questionId: results.save_data
+//         });
+//     });
+// };
+
 exports.get = function(data, callback) {
     const {level, type, questionId} = data;
     async.auto({
         getQuestionId: function(next) {
-            if (!questionId) {
+            if(!questionId) {
                 const key = REDIS_KEY_QUESTION_ID_SET + type + ':' + level;
                 redisClient.srandmember(key, function(err, question_id) {
                     if(err) {
@@ -168,7 +373,7 @@ exports.submit = function(data, callback) {
     const {uuid, questionId, answer} = data;
     async.auto({
         incSubmitTimes: function(next) {
-            const key = REDIS_KEY_USER_INFO_HASH + today + ':' + uuid ;
+            const key = REDIS_KEY_USER_INFO_HASH + today + ':' + uuid;
             redisClient.hincrby(key, 'submitTimes', 1, function(err, item) {
                 if(err) {
                     slogger.error(`增加用户答题次数失败`, err);
@@ -217,8 +422,8 @@ exports.submit = function(data, callback) {
             //
             // }
             const isRight = Number(rightAnswer) === Number(answer);
-            const key = REDIS_KEY_USER_INFO_HASH + today + ':' + uuid ;
-            const incKey = isRight ? USER_RIGHT_TIMES: USER_WRONG_TIMES;
+            const key = REDIS_KEY_USER_INFO_HASH + today + ':' + uuid;
+            const incKey = isRight ? USER_RIGHT_TIMES : USER_WRONG_TIMES;
             redisClient.hincrby(key, incKey, 1, function(err) {
                 if(err) {
                     slogger.error(`增加答题情况出错`, err);
@@ -231,7 +436,7 @@ exports.submit = function(data, callback) {
             })
         }],
         incRank: ['isRight', function(results, next) {
-            if (results.isRight) {
+            if(results.isRight) {
                 const key = REDIS_KEY_USER_RANK_ZSET + today;
                 redisClient.zincrby(key, 1, uuid, function(err) {
                     if(err) {

@@ -28,6 +28,7 @@ exports.submit = function(req, res) {
     }
     callService(req, res, questionService.submit, _body);
 };
+
 exports.updateInfo = function(req, res) {
     const _body = req.body;
     // if (!_body.uuid || !_body.questionName || !_body.describe || !_body.answers || !_body.level || !_body.type) {
@@ -37,4 +38,26 @@ exports.updateInfo = function(req, res) {
     //     );
     // }
     callService(req, res, questionService.updateInfo, _body);
+};
+
+exports.unpublished = function(req, res) {
+    const _query = req.query;
+    if (!_query.level || !_query.type) {
+        return genErrorRes(
+            ERROR_CODE.PARAMS_NOT_EXIST,
+            res
+        );
+    }
+    callService(req, res, questionService.unpublished, _query);
+};
+
+exports.evaluate = function(req, res) {
+    const _body = req.body;
+    if (!_body.questionId || !_body.level || !_body.type) {
+        return genErrorRes(
+            ERROR_CODE.PARAMS_NOT_EXIST,
+            res
+        );
+    }
+    callService(req, res, questionService.evaluate, _body);
 };

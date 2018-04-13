@@ -100,6 +100,59 @@ POST
     }
 ```
 
+#### 1.1.4 获取未发布题目列表
+
+**path:**
+
+/i/question/unpublished
+
+**method:**
+
+get
+
+**请求参数**
+
+- level {Number} {必须} 1 2 3 ...
+- type {Number} {必须} 1 历史 2 地理 3 社科 
+
+**请求响应**
+
+```javascript
+    {
+        code    :   {Number},//     0=成功
+        msg     :   {String}, // code的描述信息
+        data: {
+            unpublishedQuestions :  [{Object}] // 随机五个待评价的题目详情
+    }
+```
+
+#### 1.1.5 评价题目
+
+**path:**
+
+/i/question/evaluate
+
+**method:**
+
+post
+
+**请求参数**
+
+- questionId {String} {必填} 题目唯一 ID
+- pass {Boolean} {必填} true 同意发布 false 不同意发布
+- type {Number} {必填}
+- level {Number} {必填}
+
+**请求响应**
+
+```javascript
+    {
+        code    :   {Number},//     0=成功
+        msg     :   {String}, // code的描述信息
+    }
+```
+
+
 ### 1.2 用户相关
 
 #### 1.2.0 更新用户信息

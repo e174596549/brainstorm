@@ -14,6 +14,8 @@ router.get('/ping/health',function(req, res) {
 router.post('/i/question/add', question.add);
 router.get('/i/question/get', question.get);
 router.post('/i/question/submit', question.submit);
+router.get('/i/question/unpublished', question.unpublished);
+router.post('/i/question/evaluate', question.evaluate);
 router.post('/i/user/update-info', user.updateInfo);
 router.get('/i/rank/get', user.getRank);
 router.get('/i/user/info', user.info);
