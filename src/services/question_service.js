@@ -21,7 +21,7 @@ exports.add = function(data, callback) {
     async.auto({
         save_data: function(next) {
             new QuestionModel(data).save(function(err, item) {
-                if(err) {
+                if (err) {
                     slogger.error(`保存问题信息出错: `, err);
                     return genErrorCallback(
                         ERROR_CODE.SAVE_QUESTION_DATA_FAIL,
@@ -32,7 +32,7 @@ exports.add = function(data, callback) {
             })
         },
         cache2QuestionSet: ['save_data', function(results, next) {
-            if(!results || !results.save_data) {
+            if (!results || !results.save_data) {
                 return genErrorCallback(
                     ERROR_CODE.QUESTION_ID_NOT_EXIST,
                     next
@@ -41,7 +41,7 @@ exports.add = function(data, callback) {
             const question_id = results.save_data;
             const key = REDIS_KEY_UNPUBLISHED_QUESTION_ID_SET + type + ':' + level;
             redisClient.sadd(key, question_id, function(err) {
-                if(err) {
+                if (err) {
                     slogger.error(`添加题目 ID 到未发布题目列表缓存失败`, err);
                     return genErrorCallback(
                         ERROR_CODE.CACHE_QUESTION_2_UNPUBLISHED_SET_FAIL,
@@ -52,7 +52,7 @@ exports.add = function(data, callback) {
             })
         }],
         cache2QuestionHash: ['save_data', function(results, next) {
-            if(!results || !results.save_data) {
+            if (!results || !results.save_data) {
                 return genErrorCallback(
                     ERROR_CODE.QUESTION_ID_NOT_EXIST,
                     next
@@ -61,7 +61,7 @@ exports.add = function(data, callback) {
             const question_id = results.save_data;
             data.question_id = question_id;
             redisClient.hset(REDIS_KEY_QUESTION_INFO_HASH, question_id, JSON.stringify(data), function(err) {
-                if(err) {
+                if (err) {
                     slogger.error(`添加题目 ID 到题目详情缓存失败`, err);
                     return genErrorCallback(
                         ERROR_CODE.CACHE_QUESTION_2_HASH_FAIL,
@@ -74,7 +74,7 @@ exports.add = function(data, callback) {
     }, function(err, results) {
         console.log('err = ', err);
         console.log('results = ', results);
-        if(err) {
+        if (err) {
             return genErrorCallback(
                 err,
                 callback
@@ -92,7 +92,7 @@ exports.unpublished = function(data, callback) {
         getQuestionIds: function(next) {
             const key = REDIS_KEY_UNPUBLISHED_QUESTION_ID_SET + type + ':' + level;
             redisClient.srandmember(key, 5, function(err, questionIds) {
-                if(err) {
+                if (err) {
                     slogger.error('获取未发布题目列表缓存失败', err);
                     return genErrorCallback(
                         ERROR_CODE.GET_UNPUBLISHED_QUESTIONS_FAIL,
@@ -103,29 +103,34 @@ exports.unpublished = function(data, callback) {
             })
         },
         getQuestionInfo: ['getQuestionIds', function(results, next) {
-            if(!results || !results.getQuestionIds) {
+            if (!results || !results.getQuestionIds) {
                 return genErrorCallback(
                     ERROR_CODE.QUESTION_ID_NOT_EXIST,
                     next
                 );
             }
-            const questionIds = results.getQuestionIds;
-            redisClient.hmget(REDIS_KEY_QUESTION_INFO_HASH, questionIds, function(err, questions) {
-                if(err) {
-                    slogger.error(`添加题目 ID 到题目详情缓存失败`, err);
-                    return genErrorCallback(
-                        ERROR_CODE.CACHE_QUESTION_2_HASH_FAIL,
-                        next
-                    );
-                }
-                next(false, questions);
-            })
+            if (questionIds.length > 0) {
+                const questionIds = results.getQuestionIds;
+                redisClient.hmget(REDIS_KEY_QUESTION_INFO_HASH, questionIds, function(err, questions) {
+                    if (err) {
+                        slogger.error(`添加题目 ID 到题目详情缓存失败`, err);
+                        return genErrorCallback(
+                            ERROR_CODE.CACHE_QUESTION_2_HASH_FAIL,
+                            next
+                        );
+                    }
+                    next(false, questions);
+                })
+            }
+            else {
+                next(false)
+            }
         }]
     }, function(err, results) {
         console.log('err = ', err);
         console.log('results = ', results);
         const data = results.getQuestionInfo.map(question => JSON.parse(question));
-        if(err) {
+        if (err) {
             return genErrorCallback(
                 err,
                 callback
@@ -143,7 +148,7 @@ exports.evaluate = function(data, callback) {
     async.auto({
         updateQuestionScore: function(next) {
             redisClient.incrby(key, pass ? 1 : -1, function(err, questionScore) {
-                if(err) {
+                if (err) {
                     slogger.error('更新题目评分失败', err);
                     return genErrorCallback(
                         ERROR_CODE.UPDATE_QUESTION_SCORE_FAIL,
@@ -155,9 +160,9 @@ exports.evaluate = function(data, callback) {
         },
         check: ['updateQuestionScore', function(results, next) {
             const score = results.updateQuestionScore;
-            if(score > 3 || score < -3) {
+            if (score > 3 || score < -3) {
                 redisClient.del(key, function(err) {
-                    if(err) {
+                    if (err) {
                         slogger.error('删除题目评分缓存失败', err);
                         return genErrorCallback(
                             ERROR_CODE.DEL_CACHE_QUESTION_SCORE_FAIL,
@@ -172,10 +177,10 @@ exports.evaluate = function(data, callback) {
         }],
         upDate: ['updateQuestionScore', function(results, next) {
             const score = results.updateQuestionScore;
-            if(score > 3) {
+            if (score > 3) {
                 const key = REDIS_KEY_QUESTION_ID_SET + type + ':' + level;
                 redisClient.sadd(key, questionId, function(err) {
-                    if(err) {
+                    if (err) {
                         slogger.error(`添加题目 ID 到题目列表缓存失败`, err);
                         return genErrorCallback(
                             ERROR_CODE.CACHE_QUESTION_2_SET_FAIL,
@@ -184,10 +189,10 @@ exports.evaluate = function(data, callback) {
                     }
                     next(false);
                 })
-            } else if(score < -3) {
+            } else if (score < -3) {
                 const key = REDIS_KEY_UNPUBLISHED_QUESTION_ID_SET + type + ':' + level;
                 redisClient.srem(key, questionId, function(err) {
-                    if(err) {
+                    if (err) {
                         slogger.error('从未发布题目列表中删除题目失败', err);
                         return genErrorCallback(
                             ERROR_CODE.REMOVE_UNPUBLISHED_QUESTIONS_FAIL,
@@ -197,7 +202,7 @@ exports.evaluate = function(data, callback) {
                     next(false)
                 });
                 redisClient.hdel(REDIS_KEY_QUESTION_INFO_HASH, questionId, function(err) {
-                    if(err) {
+                    if (err) {
                         slogger.error('中题目详情缓存中删除题目失败', err);
                     }
                 })
@@ -208,7 +213,7 @@ exports.evaluate = function(data, callback) {
     }, function(err, results) {
         console.log('err = ', err);
         console.log('results = ', results);
-        if(err) {
+        if (err) {
             return genErrorCallback(
                 err,
                 callback
@@ -292,17 +297,17 @@ exports.get = function(data, callback) {
     const {level, type, questionId} = data;
     async.auto({
         getQuestionId: function(next) {
-            if(!questionId) {
+            if (!questionId) {
                 const key = REDIS_KEY_QUESTION_ID_SET + type + ':' + level;
                 redisClient.srandmember(key, function(err, question_id) {
-                    if(err) {
+                    if (err) {
                         slogger.error(`从缓存中获取 questionID 失败`, err);
                         return genErrorCallback(
                             ERROR_CODE.GET_QUESTION_ID_FROM_CACHE_FAIL,
                             next
                         );
                     }
-                    if(!question_id) {
+                    if (!question_id) {
                         return genErrorCallback(
                             ERROR_CODE.NO_QUESTION_ID_CAN_USE,
                             next
@@ -315,21 +320,21 @@ exports.get = function(data, callback) {
             }
         },
         getQuestionInfo: ['getQuestionId', function(results, next) {
-            if(!results || !results.getQuestionId) {
+            if (!results || !results.getQuestionId) {
                 return genErrorCallback(
                     ERROR_CODE.QUESTION_ID_NOT_EXIST,
                     next
                 );
             }
             redisClient.hget(REDIS_KEY_QUESTION_INFO_HASH, results.getQuestionId, function(err, item) {
-                if(err) {
+                if (err) {
                     slogger.error(`通过问题 ID 获取题目详情失败`, err);
                     return genErrorCallback(
                         ERROR_CODE.GET_QUESTION_BY_ID_FAIL,
                         next
                     );
                 }
-                if(!item) {
+                if (!item) {
                     slogger.error(`缓存中未查到改题`, questionId);
                     return genErrorCallback(
                         ERROR_CODE.QUESTION_NOT_EXIST_IN_CACHE,
@@ -340,7 +345,7 @@ exports.get = function(data, callback) {
                 try {
                     questionInfo = JSON.parse(item);
                 } catch(e) {
-                    if(e) {
+                    if (e) {
                         slogger.error(`解析题目信息失败`, questionInfo);
                         return genErrorCallback(
                             ERROR_CODE.PARSE_QUESTION_INFO_FAIL,
@@ -357,7 +362,7 @@ exports.get = function(data, callback) {
             })
         }]
     }, function(err, results) {
-        if(err) {
+        if (err) {
             return genErrorCallback(
                 err,
                 callback
@@ -375,7 +380,7 @@ exports.submit = function(data, callback) {
         incSubmitTimes: function(next) {
             const key = REDIS_KEY_USER_INFO_HASH + today + ':' + uuid;
             redisClient.hincrby(key, 'submitTimes', 1, function(err, item) {
-                if(err) {
+                if (err) {
                     slogger.error(`增加用户答题次数失败`, err);
                     return genErrorCallback(
                         ERROR_CODE.INC_USER_ANWSER_TIMES_FAIL,
@@ -387,14 +392,14 @@ exports.submit = function(data, callback) {
         },
         getQuestionInfo: function(next) {
             redisClient.hget(REDIS_KEY_QUESTION_INFO_HASH, questionId, function(err, item) {
-                if(err) {
+                if (err) {
                     slogger.error(`通过问题 ID 获取题目详情失败`, err);
                     return genErrorCallback(
                         ERROR_CODE.GET_QUESTION_BY_ID_FAIL,
                         next
                     );
                 }
-                if(!item) {
+                if (!item) {
                     slogger.error(`缓存中未查到改题`, questionId);
                     return genErrorCallback(
                         ERROR_CODE.QUESTION_NOT_EXIST_IN_CACHE,
@@ -405,7 +410,7 @@ exports.submit = function(data, callback) {
                 try {
                     questionInfo = JSON.parse(item);
                 } catch(e) {
-                    if(e) {
+                    if (e) {
                         slogger.error(`解析题目信息失败`, questionInfo);
                         return genErrorCallback(
                             ERROR_CODE.PARSE_QUESTION_INFO_FAIL,
@@ -425,7 +430,7 @@ exports.submit = function(data, callback) {
             const key = REDIS_KEY_USER_INFO_HASH + today + ':' + uuid;
             const incKey = isRight ? USER_RIGHT_TIMES : USER_WRONG_TIMES;
             redisClient.hincrby(key, incKey, 1, function(err) {
-                if(err) {
+                if (err) {
                     slogger.error(`增加答题情况出错`, err);
                     return genErrorCallback(
                         ERROR_CODE.INC_USER_RIGHT_TIMES_FAIL,
@@ -436,10 +441,10 @@ exports.submit = function(data, callback) {
             })
         }],
         incRank: ['isRight', function(results, next) {
-            if(results.isRight) {
+            if (results.isRight) {
                 const key = REDIS_KEY_USER_RANK_ZSET + today;
                 redisClient.zincrby(key, 1, uuid, function(err) {
-                    if(err) {
+                    if (err) {
                         slogger.error(`增加用户在排行榜中的积分失败`, err);
                         return genErrorCallback(
                             ERROR_CODE.INC_USER_RANK_SCORE_FAIL,
@@ -453,7 +458,7 @@ exports.submit = function(data, callback) {
             }
         }]
     }, function(err, results) {
-        if(err) {
+        if (err) {
             return genErrorCallback(
                 err,
                 callback
@@ -477,7 +482,7 @@ exports.updateInfo = function(data, callback) {
                 nickName,
                 avatarUrl
             }), function(err) {
-                if(err) {
+                if (err) {
                     slogger.error(`更新用户 token 信息失败`, err);
                     return genErrorCallback(
                         ERROR_CODE.UPDATE_USER_TOKEN_INFO_FAIL,
@@ -488,7 +493,7 @@ exports.updateInfo = function(data, callback) {
             })
         }
     }, function(err) {
-        if(err) {
+        if (err) {
             return genErrorCallback(
                 err,
                 callback
