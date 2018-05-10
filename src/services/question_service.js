@@ -15,8 +15,6 @@ const REDIS_KEY_UNPUBLISHED_QUESTION_ID_SET = 'bran_strom:unpublished_question_i
 const REDIS_KEY_EVALUATE_QUESTION_INC = 'bran_strom:evaluate_question_inc:';
 const USER_RIGHT_TIMES = 'right_times';
 const USER_WRONG_TIMES = 'wrong_times';
-const date = new Date();
-const today = `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()}`;
 
 exports.add = function(data, callback) {
     const {type, level} = data;
@@ -370,6 +368,8 @@ exports.get = function(data, callback) {
 };
 
 exports.submit = function(data, callback) {
+    const date = new Date();
+    const today = `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()}`;
     const {uuid, questionId, answer} = data;
     async.auto({
         incSubmitTimes: function(next) {
