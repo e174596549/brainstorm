@@ -109,7 +109,7 @@ exports.unpublished = function(data, callback) {
                     next
                 );
             }
-            if (questionIds.length > 0) {
+            if (results.getQuestionIds.length > 0) {
                 const questionIds = results.getQuestionIds;
                 redisClient.hmget(REDIS_KEY_QUESTION_INFO_HASH, questionIds, function(err, questions) {
                     if (err) {
@@ -145,9 +145,10 @@ exports.unpublished = function(data, callback) {
 exports.evaluate = function(data, callback) {
     const {questionId, pass, type, level} = data;
     const key = REDIS_KEY_EVALUATE_QUESTION_INC + questionId;
+console.log('data,key',data,key)
     async.auto({
         updateQuestionScore: function(next) {
-            redisClient.incrby(key, pass ? 1 : -1, function(err, questionScore) {
+            redisClient.incrby(key, pass === 'true' ? 1 : -1, function(err, questionScore) {
                 if (err) {
                     slogger.error('更新题目评分失败', err);
                     return genErrorCallback(
