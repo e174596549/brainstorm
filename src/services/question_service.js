@@ -130,7 +130,7 @@ exports.unpublished = function(data, callback) {
         console.log('err = ', err);
         console.log('results = ', results);
         let data = [];
-        if (results.getQuestionInfo.length > 0) {
+        if (results.getQuestionInfo && results.getQuestionInfo.length > 0) {
             data = results.getQuestionInfo.map(question => JSON.parse(question));
         }
         if (err) {
