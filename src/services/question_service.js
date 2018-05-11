@@ -191,7 +191,17 @@ console.log('data,key',data,key)
                             next
                         );
                     }
-                    next(false);
+                    const key2 = REDIS_KEY_UNPUBLISHED_QUESTION_ID_SET + type + ':' + level;
+                    redisClient.srem(key2, questionId, function(err) {
+                        if (err) {
+                            slogger.error('从未发布题目列表中删除题目失败', err);
+                            return genErrorCallback(
+                                ERROR_CODE.REMOVE_UNPUBLISHED_QUESTIONS_FAIL,
+                                next
+                            );
+                        }
+                        next(false)
+                    });
                 })
             } else if (score < -3) {
                 const key = REDIS_KEY_UNPUBLISHED_QUESTION_ID_SET + type + ':' + level;
