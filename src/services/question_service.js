@@ -129,7 +129,10 @@ exports.unpublished = function(data, callback) {
     }, function(err, results) {
         console.log('err = ', err);
         console.log('results = ', results);
-        const data = results.getQuestionInfo.map(question => JSON.parse(question));
+        let data = [];
+        if (results.getQuestionInfo.length > 0) {
+            data = results.getQuestionInfo.map(question => JSON.parse(question));
+        }
         if (err) {
             return genErrorCallback(
                 err,
